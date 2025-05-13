@@ -216,7 +216,7 @@ try {
       <div class="carousel-inner-custom">
           <div class="carousel-img">
               <img src="./images/anhnen2.webp" alt="">
-              <img src="./images/anhnen1.webp" alt="">
+              <img src="./images/anhnen1.JPG" alt="">
             <img src="./images/anhnen3.webp" alt="">
             <img src="./images/anhnen4.webp" alt="">
           </div>
