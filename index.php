@@ -14,7 +14,7 @@ try {
     $featured_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Lấy danh sách danh mục
-    $stmt = $conn->query("SELECT * FROM categories WHERE parent_id IS NULL AND status = 'active'");
+    $stmt = $conn->query("SELECT * FROM categories WHERE status = 'active'");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Lấy danh sách thương hiệu
@@ -40,19 +40,31 @@ try {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
      <style>
+        /* Header */
+        header{
+          position: fixed;
+          width: 100%;
+          z-index: 20;
+        }
+ 
+        /* Hero */
+        .hero{
+            position: relative;
+            top: 47px;
+        }
         /* Cources */
-.carousel-container {
-  width: 100%;
-  height: 480px;
-  background-color: aliceblue;
-  margin-top: 20px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #378d570f;
-}
+      .carousel-container {
+        width: 100%;
+        height: 480px;
+        background-color: aliceblue;
+        position: relative;
+        overflow: hidden;
+        top: 50px;
+         display: flex;
+       justify-content: center;
+       align-items: center;
+   background-color: #378d570f;
+   }
 
 .carousel-img {
   display: flex;
@@ -109,9 +121,12 @@ try {
   font-size: 24px;
   color: white;
 }
+/* Features */
+.features h2{
+  padding-top: 50px;
+}
 
 /* Brands */
-
 .card {
   position: relative;
   overflow: hidden;
@@ -146,7 +161,7 @@ try {
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="collapse navbar-collapse d-flex" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="index.php">Trang chủ</a>
@@ -154,14 +169,17 @@ try {
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Danh mục</a>
                             <ul class="dropdown-menu">
-                                <?php foreach ($categories as $category): ?>
+                               <?php foreach ($categories as $category): ?>
                                     <li>
-                                        <a class="dropdown-item" href="category.php?slug=<?php echo $category['slug']; ?>">
+                                        <a class="dropdown-item" href="products.php?category=<?php echo $category['categories_name']; ?>">
                                             <?php echo htmlspecialchars($category['name']); ?>
                                         </a>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="about.php">Giới thiệu</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="news.php">Tin tức</a>
@@ -183,6 +201,7 @@ try {
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="profile.php">Tài khoản</a></li>
                                     <li><a class="dropdown-item" href="orders.php">Đơn hàng</a></li>
+                                    <li><a class="dropdown-item" href="change_password.php">Đổi mật khẩu</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="logout.php">Đăng xuất</a></li>
                                 </ul>
@@ -228,7 +247,7 @@ try {
     </div>
 
     <!-- Featured Products -->
-    <section class="py-5">
+    <section class="features py-5">
         <div class="container">
             <h2 class="text-center mb-4">Sản phẩm nổi bật</h2>
             <div class="row">
@@ -262,7 +281,7 @@ try {
     </section>
 
     <!-- Categories -->
-    <section class="py-5 bg-light">
+    <section class="categories py-5 bg-light">
         <div class="container">
             <h2 class="text-center mb-4">Danh mục sản phẩm</h2>
             <div class="row">
@@ -288,7 +307,7 @@ try {
 
 
       <!-- Brands -->
-    <section class="py-5">
+    <section class="brands py-5">
     <div class="container">
         <h2 class="text-center mb-4">Thương hiệu</h2>
         <div class="row">
@@ -311,8 +330,7 @@ try {
     </div>
     </section>
 
-    <!-- 
-    <section class="py-5 bg-light">
+ main
         <div class="container">
             <h2 class="text-center mb-4">Tin tức</h2>
             <div class="row">
@@ -390,20 +408,20 @@ try {
     updateTransform();
   }
 
-  let interval = setInterval(slideShow, 1000000);
+  let interval = setInterval(slideShow,3000);
 
   iconLeft.addEventListener("click", () => {
     clearInterval(interval);
     currentIdx = (currentIdx === 0) ? imgLength - 1 : currentIdx - 1;
     updateTransform();
-    interval = setInterval(slideShow, 1000000);
+    interval = setInterval(slideShow, 3000);
   });
 
   iconRight.addEventListener("click", () => {
     clearInterval(interval);
     currentIdx = (currentIdx === imgLength - 1) ? 0 : currentIdx + 1;
     updateTransform();
-    interval = setInterval(slideShow, 1000000);
+    interval = setInterval(slideShow, 3000);
   });
 
   // Resize support
