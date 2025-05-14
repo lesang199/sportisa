@@ -234,10 +234,10 @@ try {
     <div class="carousel-container">
       <div class="carousel-inner-custom">
           <div class="carousel-img">
-              <img src="./images/anhnen2.webp" alt="">
-              <img src="./images/anhnen1.webp" alt="">
-            <img src="./images/anhnen3.webp" alt="">
-            <img src="./images/anhnen4.webp" alt="">
+              <img src="./images/anhnen1.JPG" alt="">
+              <img src="./images/anhnen2.JPG" alt="">
+            <img src="./images/image.jpg" alt="">
+            <img src="./images/anhnen4.jpg" alt="">
           </div>
     
         </div>
@@ -330,8 +330,7 @@ try {
     </div>
     </section>
 
-    <!-- News -->
-    <section class="news py-5 bg-light">
+ main
         <div class="container">
             <h2 class="text-center mb-4">Tin tức</h2>
             <div class="row">
@@ -353,7 +352,7 @@ try {
                 <?php endforeach; ?>
             </div>
         </div>
-    </section>
+    </section>      -->     
 
     <!-- Footer -->
     <footer class="bg-dark text-white py-4">
@@ -366,8 +365,10 @@ try {
                 <div class="col-md-4">
                     <h5>Liên hệ</h5>
                     <p>
-                        <i class="fas fa-map-marker-alt"></i> 123 Đường ABC, Quận XYZ, TP.HCM<br>
-                        <i class="fas fa-phone"></i> 0123456789<br>
+                        <i class="fas fa-map-marker-alt"></i> 279 Nguyễn Tri Phương phường 5, quận 10, TP.HCM<br>
+                        <i class="fas fa-clock"></i> Thứ 2 - Thứ 7: 8:00 - 17:30<br>
+                        <i class="fas fa-clock"></i> Chủ nhật: 9:00 - 16:00<br> 
+                        <i class="fas fa-phone"></i> 0902776587 - 0768628855<br>
                         <i class="fas fa-envelope"></i> contact@sportisa.com
                     </p>
                 </div>
@@ -376,7 +377,6 @@ try {
                     <div class="social-links">
                         <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
                         <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
                         <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>

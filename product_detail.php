@@ -22,9 +22,9 @@ if (!$product) {
 }
 
 // Lấy sản phẩm liên quan
-$query = "SELECT * FROM products WHERE category = ? AND id != ? LIMIT 4";
+$query = "SELECT * FROM products WHERE categories = ? AND id != ? LIMIT 4";
 $stmt = $conn->prepare($query);
-$stmt->execute([$product['category'], $product_id]);
+$stmt->execute([$product['categories'], $product_id]);
 $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
