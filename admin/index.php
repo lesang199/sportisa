@@ -33,15 +33,14 @@ try {
                          LIMIT 5");
     $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
- 
-    $stmt = $conn->query("SELECT p.name, p.image, COUNT(oi.id) as total_sold, SUM(oi.quantity) as total_quantity
-                         FROM products p
-                         JOIN order_items oi ON p.id = oi.product_id
-                         JOIN orders o ON oi.order_id = o.id
-                         WHERE o.status = 'delivered'
-                         GROUP BY p.id
-                         ORDER BY total_quantity DESC
-                         LIMIT 5");
+     $stmt = $conn->query("SELECT p.id, p.name, p.image, p.price, COUNT(oi.id) as order_count, SUM(oi.quantity) as total_quantity
+                     FROM products p
+                     JOIN order_items oi ON p.id = oi.product_id
+                     JOIN orders o ON oi.order_id = o.id
+                     WHERE o.status = 'delivered'
+                     GROUP BY p.id
+                     ORDER BY total_quantity DESC
+                     LIMIT 5");
     $top_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
    
@@ -67,7 +66,7 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
-    
+
 </head>
 <body>
     <div class="container-fluid">
@@ -192,46 +191,45 @@ try {
                     </div>
 
                     <!-- Sản phẩm bán chạy -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Sản phẩm bán chạy</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Sản phẩm</th>
-                                                <th>Số lượng bán</th>
-                                                <th>Doanh thu</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($top_products as $product): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if ($product['image']): ?>
-                                                                <img src="../uploads/products/<?php echo $product['image']; ?>" 
-                                                                     alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                                                     class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                                            <?php endif; ?>
-                                                            <?php echo htmlspecialchars($product['name']); ?>
-                                                        </div>
-                                                    </td>
-                                                    <td><?php echo number_format($product['total_quantity']); ?></td>
-                                                    <td><?php echo number_format($product['total_sold'] * $product['total_quantity'], 0, ',', '.'); ?> VNĐ</td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                    <!-- Sản phẩm bán chạy -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Sản phẩm bán chạy</h5>
+                        </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th>Số lượng bán</th>
+                                        <th>Doanh thu</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($top_products as $product): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <?php if ($product['image']): ?>
+                                                        <img src="../uploads/products/<?php echo $product['image']; ?>" 
+                                                             alt="<?php echo htmlspecialchars($product['name']); ?>" 
+                                                             class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    <?php endif; ?>
+                                                    <?php echo htmlspecialchars($product['name']); ?>
+                                                </div>
+                                            </td>
+                                            <td><?php echo number_format($product['total_quantity']); ?></td>
+                                            <td><?php echo number_format($product['price'] * $product['total_quantity'], 0, ',', '.'); ?> VNĐ</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                    </div>
                 </div>
-
                 <!-- Đánh giá mới nhất -->
                 <div class="card mb-4">
                     <div class="card-header">
