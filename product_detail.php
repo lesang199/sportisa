@@ -11,7 +11,24 @@ if (!isset($_GET['id'])) {
 $product_id = $_GET['id'];
 
 // Lấy thông tin sản phẩm
-$query = "SELECT * FROM products WHERE id = ?";
+$query = "SELECT 
+            p.id,
+            p.name,
+            p.price,
+            p.image,
+            p.description,
+            p.stock,
+            pd.color,
+            pd.material,
+            pd.origin,
+            pd.weight,
+            pd.category_id,
+            c.name AS category_name
+          FROM products p
+          JOIN product_details pd ON p.id = pd.product_id
+          JOIN categories c ON pd.category_id = c.id
+          WHERE p.id = ?";
+
 $stmt = $conn->prepare($query);
 $stmt->execute([$product_id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -21,11 +38,25 @@ if (!$product) {
     exit();
 }
 
-// Lấy sản phẩm liên quan
-$query = "SELECT * FROM products WHERE categories = ? AND id != ? LIMIT 4";
+// Lấy các size có sẵn cho sản phẩm từ bảng product_details và product_sizes
+$query = "SELECT DISTINCT ps.size
+          FROM product_sizes ps
+          JOIN product_details pd ON ps.id = pd.product_id
+          WHERE pd.product_id = ?";
 $stmt = $conn->prepare($query);
-$stmt->execute([$product['categories'], $product_id]);
+$stmt->execute([$product_id]);
+$sizes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Lấy sản phẩm liên quan cùng danh mục
+$query = "SELECT p.* 
+          FROM products p
+          JOIN product_details pd ON p.id = pd.product_id
+          WHERE pd.category_id = ? AND p.id != ?
+          LIMIT 4";
+$stmt = $conn->prepare($query);
+$stmt->execute([$product['category_id'], $product_id]);
 $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -49,18 +80,11 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <img src="<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo $product['name']; ?>">
                 </div>
                 <div class="row">
+                    <?php for ($i = 0; $i < 4; $i++): ?>
                     <div class="col-3">
                         <img src="<?php echo $product['image']; ?>" class="img-thumbnail" alt="Thumbnail">
                     </div>
-                    <div class="col-3">
-                        <img src="<?php echo $product['image']; ?>" class="img-thumbnail" alt="Thumbnail">
-                    </div>
-                    <div class="col-3">
-                        <img src="<?php echo $product['image']; ?>" class="img-thumbnail" alt="Thumbnail">
-                    </div>
-                    <div class="col-3">
-                        <img src="<?php echo $product['image']; ?>" class="img-thumbnail" alt="Thumbnail">
-                    </div>
+                    <?php endfor; ?>
                 </div>
             </div>
 
@@ -69,10 +93,8 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h1 class="mb-3"><?php echo $product['name']; ?></h1>
                 <div class="d-flex align-items-center mb-3">
                     <div class="text-warning me-2">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
                         <i class="fas fa-star-half-alt"></i>
                     </div>
                     <span class="text-muted">(4.5/5 - 100 đánh giá)</span>
@@ -85,10 +107,11 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="mb-4">
                     <h5>Thông số kỹ thuật:</h5>
                     <ul class="list-unstyled">
-                        <li><strong>Danh mục:</strong> <?php echo ucfirst($product['category']); ?></li>
-                        <li><strong>Thương hiệu:</strong> <?php echo $product['brand']; ?></li>
+                        <li><strong>Danh mục:</strong> <?php echo ucfirst($product['category_name']); ?></li>
                         <li><strong>Màu sắc:</strong> <?php echo $product['color']; ?></li>
-                        <li><strong>Kích thước:</strong> <?php echo $product['size']; ?></li>
+                        <li><strong>Trọng lượng:</strong> <?php echo $product['weight']; ?></li>
+                        <li><strong>Xuất xứ:</strong> <?php echo $product['origin']; ?></li>
+                        <li><strong>Chất liệu:</strong> <?php echo $product['material']; ?></li>
                         <li><strong>Tình trạng:</strong> 
                             <?php if ($product['stock'] > 0): ?>
                                 <span class="text-success">Còn hàng</span>
@@ -99,6 +122,18 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </ul>
                 </div>
 
+                <!-- Chọn size -->
+                <div class="mb-3">
+                    <label for="sizeSelect" class="form-label"><strong>Chọn size:</strong></label>
+                    <select class="form-select" id="sizeSelect" name="size" required>
+                        <option value="">-- Chọn size --</option>
+                        <?php foreach ($sizes as $size): ?>
+                            <option value="<?php echo htmlspecialchars($size); ?>"><?php echo htmlspecialchars($size); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Tăng/giảm số lượng -->
                 <div class="d-flex align-items-center mb-4">
                     <div class="input-group me-3" style="width: 150px;">
                         <button class="btn btn-outline-secondary" type="button" id="decrease">-</button>
@@ -159,7 +194,6 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/main.js"></script>
     <script>
         // Xử lý tăng/giảm số lượng
         document.getElementById('increase').addEventListener('click', function() {
@@ -177,26 +211,35 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
 
-        // Xử lý thêm vào giỏ hàng
+        // Thêm vào giỏ hàng
         document.querySelectorAll('.add-to-cart').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const productId = this.dataset.id;
                 const quantity = document.getElementById('quantity').value;
-                
+                const size = document.getElementById('sizeSelect')?.value;
+
+                if (!size) {
+                    alert("Vui lòng chọn size trước khi thêm vào giỏ hàng.");
+                    return;
+                }
+
                 fetch('add_to_cart.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'product_id=' + productId + '&quantity=' + quantity
+                    body: 'product_id=' + encodeURIComponent(productId) + 
+                          '&quantity=' + encodeURIComponent(quantity) +
+                          '&size=' + encodeURIComponent(size)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert('Đã thêm vào giỏ hàng');
-                        // Cập nhật số lượng trong giỏ hàng
                         const cartCount = document.querySelector('.badge');
-                        cartCount.textContent = data.cart_count;
+                        if (cartCount) {
+                            cartCount.textContent = data.cart_count;
+                        }
                     } else {
                         alert('Có lỗi xảy ra');
                     }
@@ -205,4 +248,4 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         });
     </script>
 </body>
-</html> 
+</html>
