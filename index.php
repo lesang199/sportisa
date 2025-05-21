@@ -328,31 +328,7 @@ try {
             <?php endforeach; ?>
         </div>
     </div>
-    </section>
-
- main
-        <div class="container">
-            <h2 class="text-center mb-4">Tin tức</h2>
-            <div class="row">
-                <?php foreach ($news as $item): ?>
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100">
-                            <?php if ($item['image']): ?>
-                                <img src="uploads/news/<?php echo $item['image']; ?>" 
-                                     class="card-img-top" 
-                                     alt="<?php echo htmlspecialchars($item['title']); ?>">
-                            <?php endif; ?>
-                            <div class="card-body">
-                                <h5 class="card-title"><?php echo htmlspecialchars($item['title']); ?></h5>
-                                <p class="card-text"><?php echo substr(strip_tags($item['content']), 0, 100) . '...'; ?></p>
-                                <a href="news_detail.php?slug=<?php echo $item['slug']; ?>" class="btn btn-primary">Đọc thêm</a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>      -->     
+ 
 
     <!-- Footer -->
     <footer class="bg-dark text-white py-4">
