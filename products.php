@@ -1,5 +1,4 @@
 
-
 <?php
 session_start();
 include 'config/database.php';
@@ -136,8 +135,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <?php include 'includes/header.php'; ?>
-
-    <div class="container py-5">
+ <div class="container py-5">
         <div class="row">
             <!-- Sidebar -->
             <div class="col-md-3">
@@ -146,21 +144,18 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h5 class="mb-0">Danh mục</h5>
                     </div>
                     <div class="card-body">
-                        <ul class="list-unstyled sidebar-list">
-                            <li class="mb-2">
-                                <a href="products.php" class="<?php echo !$category ? 'text-primary fw-bold' : ''; ?>">
-                                    Tất cả sản phẩm
-                                </a>
-                            </li>
-                            <?php foreach ($categories as $cat): ?>
-                                <li class="mb-2">
-                                    <a href="products.php?category=<?php echo $cat['categories_name']; ?>" 
-                                       class="<?php echo $category == $cat['categories_name'] ? 'text-primary fw-bold' : ''; ?>">
-                                        <?php echo $cat['name']; ?>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
+                       <ul class="list-unstyled sidebar-list" id="category-list">
+    <li class="mb-2">
+        <a href="#" data-category="" class="<?php echo !$category ? 'text-primary fw-bold' : ''; ?>">Tất cả sản phẩm</a>
+    </li>
+    <?php foreach ($categories as $cat): ?>
+        <li class="mb-2">
+            <a href="#" data-category="<?php echo $cat['categories_name']; ?>" class="<?php echo $category == $cat['categories_name'] ? 'text-primary fw-bold' : '';  ?>">
+                <?php echo $cat['name']; ?>
+            </a>
+        </li>
+    <?php endforeach; ?>
+</ul>
                     </div>
                 </div>
 
@@ -172,19 +167,19 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <form method="GET" action="products.php">
                             <input type="hidden" name="category" value="<?php echo $category; ?>">
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="price" id="price1" value="0-500000" <?php echo $price_range == '0-500000' ? 'checked' : ''; ?> onchange="this.form.submit()">
+                                <input class="form-check-input" type="radio" name="price" id="price1" value="0-500000" <?php echo $price_range == '0-500000' ? 'checked' : ''; ?> >
                                 <label class="form-check-label" for="price1">Dưới 500.000 VNĐ</label>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="price" id="price2" value="500000-1000000" <?php echo $price_range == '500000-1000000' ? 'checked' : ''; ?> onchange="this.form.submit()">
+                                <input class="form-check-input" type="radio" name="price" id="price2" value="500000-1000000" <?php echo $price_range == '500000-1000000' ? 'checked' : ''; ?> >
                                 <label class="form-check-label" for="price2">500.000 - 1.000.000 VNĐ</label>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="price" id="price3" value="1000000-2000000" <?php echo $price_range == '1000000-2000000' ? 'checked' : ''; ?> onchange="this.form.submit()">
+                                <input class="form-check-input" type="radio" name="price" id="price3" value="1000000-2000000" <?php echo $price_range == '1000000-2000000' ? 'checked' : ''; ?> >
                                 <label class="form-check-label" for="price3">1.000.000 - 2.000.000 VNĐ</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="price" id="price4" value="2000000-" <?php echo $price_range == '2000000-' ? 'checked' : ''; ?> onchange="this.form.submit()">
+                                <input class="form-check-input" type="radio" name="price" id="price4" value="2000000-" <?php echo $price_range == '2000000-' ? 'checked' : ''; ?> >
                                 <label class="form-check-label" for="price4">Trên 2.000.000 VNĐ</label>
                             </div>
                         </form>
@@ -195,9 +190,9 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- Products -->
             <div class="col-md-9">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><?php echo $category ? ucfirst($category) : 'Tất cả sản phẩm'; ?></h2>
+                    <h2 class="title-products">Tất cả sản phẩm</h2>
                     <div class="d-flex">
-                        <form class="me-3" method="GET">
+                        <form class="me-3" method="GET" id="search-form">
                             <input type="hidden" name="category" value="<?php echo $category; ?>">
                             <div class="input-group">
                                 <input type="text" class="form-control" name="search" placeholder="Tìm kiếm..." value="<?php echo $search; ?>">
@@ -206,42 +201,18 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </button>
                             </div>
                         </form>
-                        <select class="form-select" onchange="window.location.href=this.value">
-                            <option value="products.php?sort=newest<?php echo $category ? '&category='.$category : ''; ?>" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Mới nhất</option>
-                            <option value="products.php?sort=price_asc<?php echo $category ? '&category='.$category : ''; ?>" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Giá tăng dần</option>
-                            <option value="products.php?sort=price_desc<?php echo $category ? '&category='.$category : ''; ?>" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Giá giảm dần</option>
-                            <option value="products.php?sort=name<?php echo $category ? '&category='.$category : ''; ?>" <?php echo $sort == 'name' ? 'selected' : ''; ?>>Tên A-Z</option>
+                        <select class="form-select"  id="sort-select">
+                            <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Mới nhất</option>
+                           <option value="price_asc" <?php echo $sort == 'price_asc' ? 'selected' : ''; ?>>Giá tăng dần</option>
+                          <option value="price_desc" <?php echo $sort == 'price_desc' ? 'selected' : ''; ?>>Giá giảm dần</option>
+                          <option value="name" <?php echo $sort == 'name' ? 'selected' : ''; ?>>Tên A-Z</option>
                         </select>
+           
                     </div>
                 </div>
 
-                <div class="row">
-                    <?php if (empty($products)): ?>
-                        <div class="text-center py-5">
-                            <h3>Không tìm thấy sản phẩm</h3>
-                            <p>Vui lòng thử lại với từ khóa hoặc bộ lọc khác.</p>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <div class="col-md-4 mb-4">
-                                <div class="card product-card">
-                                    <img src="<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo $product['name']; ?>">
-                                    <div class="card-body">
-                                        <h5 class="card-title"><?php echo $product['name']; ?></h5>
-                                        <p class="card-text text-primary fw-bold">
-                                            <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
-                                        </p>
-                                        <div class="d-flex justify-content-between">
-                                            <a href="product_detail.php?id=<?php echo $product['id']; ?>" class="btn btn-primary">Xem chi tiết</a>
-                                            <button class="btn btn-outline-primary add-to-cart" data-id="<?php echo $product['id']; ?>">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                <div class="row" id="product-container">
+                    <?php include 'fetch_products.php'; ?>
                 </div>
             </div>
         </div>
@@ -277,6 +248,84 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             });
         });
+        function fetchProducts(params = {}) {
+    // Lấy các giá trị lọc hiện tại nếu chưa truyền vào
+    if (!params.hasOwnProperty('category')) {
+        params.category = document.querySelector('#category-list a.text-primary, #category-list a.fw-bold')?.getAttribute('data-category') || '';
+    }
+    if (!params.hasOwnProperty('search')) {
+        params.search = document.querySelector('input[name="search"]').value;
+    }
+    if (!params.hasOwnProperty('sort')) {
+        params.sort = document.getElementById('sort-select').value;
+    }
+    if (!params.hasOwnProperty('price')) {
+        params.price = document.querySelector('input[name="price"]:checked')?.value || '';
+    }
+
+    // Gửi AJAX
+    const url = 'fetch_products.php?' + new URLSearchParams(params).toString();
+    fetch(url)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('product-container').innerHTML = html;
+        });
+}
+
+// Chọn danh mục
+function getCurrentFilters() {
+    return {
+        category: document.querySelector('#category-list a.text-primary, #category-list a.fw-bold')?.getAttribute('data-category') || '',
+        search: document.querySelector('input[name="search"]').value,
+        sort: document.getElementById('sort-select').value,
+        price: document.querySelector('input[name="price"]:checked')?.value || ''
+    };
+}
+
+// Lọc giá
+document.querySelectorAll('input[name="price"]').forEach(radio => {
+    radio.addEventListener('change', function(e) {
+        e.preventDefault();
+        const filters = getCurrentFilters();
+        filters.price = this.value;
+        fetchProducts(filters);
+    });
+});
+
+// Tìm kiếm
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const filters = getCurrentFilters();
+    filters.search = this.search.value;
+    fetchProducts(filters);
+});
+
+// Sắp xếp
+document.getElementById('sort-select').addEventListener('change', function(e) {
+    e.preventDefault();
+    const filters = getCurrentFilters();
+    filters.sort = this.value;
+    fetchProducts(filters);
+});
+
+// Chọn danh mục
+document.getElementById('category-list').addEventListener('click', function(e) {
+    if (e.target.tagName === 'A') {
+        e.preventDefault();
+        document.querySelectorAll('#category-list a').forEach(a => a.classList.remove('text-primary', 'fw-bold'));
+        e.target.classList.add('text-primary', 'fw-bold');
+          // Reset lọc giá
+        document.querySelectorAll('input[name="price"]').forEach(radio => radio.checked = false);
+
+        const filters = getCurrentFilters();
+        filters.category = e.target.getAttribute('data-category');
+        fetchProducts(filters);
+        let titleProducts = document.querySelector('.title-products');
+        titleProducts.innerText = e.target.innerText;
+    }
+});
+      
     </script>
+
 </body>
 </html> 
