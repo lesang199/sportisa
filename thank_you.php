@@ -77,8 +77,12 @@ $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>" class="img-thumbnail me-2" style="width: 50px;">
-                                                <?php echo $item['name']; ?>
+                                                <?php if ($item['image']): ?>
+                                                    <img src="uploads/products/<?php echo $item['image']; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="img-thumbnail me-2" style="width: 50px;">
+                                                <?php else: ?>
+                                                    <img src="images/no-image.jpg" alt="No image" class="img-thumbnail me-2" style="width: 50px;">
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($item['name']); ?>
                                             </div>
                                         </td>
                                         <td><?php echo $item['quantity']; ?></td>

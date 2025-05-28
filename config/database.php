@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$dbname = 'sportisa';
+$dbname = 'sportisa-main';
 $username = 'root';
 $password = '';
 

@@ -70,9 +70,13 @@ if (isset($_SESSION['cart'])) {
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>" class="img-thumbnail me-3" style="width: 80px;">
+                                                    <?php if ($item['image']): ?>
+                                                        <img src="uploads/products/<?php echo $item['image']; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="img-thumbnail me-3" style="width: 80px;">
+                                                    <?php else: ?>
+                                                        <img src="images/no-image.jpg" alt="No image" class="img-thumbnail me-3" style="width: 80px;">
+                                                    <?php endif; ?>
                                                     <div>
-                                                        <h5 class="mb-0"><?php echo $item['name']; ?></h5>
+                                                        <h5 class="mb-0"><?php echo htmlspecialchars($item['name']); ?></h5>
                                                     </div>
                                                 </div>
                                             </td>

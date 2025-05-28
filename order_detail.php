@@ -33,14 +33,23 @@ try {
     }
 
     // Lấy chi tiết đơn hàng
-    $stmt = $conn->prepare("
-        SELECT od.*, p.name, p.image 
-        FROM order_details od 
-        JOIN products p ON od.product_id = p.id 
-        WHERE od.order_id = ?
-    ");
-    $stmt->execute([$order_id]);
-    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $stmt = $conn->prepare("
+            SELECT od.*, p.name, p.image 
+            FROM order_items od 
+            JOIN products p ON od.product_id = p.id 
+            WHERE od.order_id = ?
+        ");
+        $stmt->execute([$order_id]);
+        $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($order_details)) {
+            $error = 'Không tìm thấy chi tiết đơn hàng';
+        }
+    } catch(PDOException $e) {
+        $error = 'Lỗi khi lấy chi tiết đơn hàng: ' . $e->getMessage();
+        $order_details = [];
+    }
 } catch(PDOException $e) {
     $error = 'Có lỗi xảy ra: ' . $e->getMessage();
 }
@@ -123,6 +132,11 @@ try {
                         </div>
 
                         <div class="table-responsive">
+                            <?php if (isset($error)): ?>
+                                <div class="alert alert-danger">
+                                    <?php echo htmlspecialchars($error); ?>
+                                </div>
+                            <?php else: ?>
                             <table class="table">
                                 <thead>
                                     <tr>
@@ -158,6 +172,7 @@ try {
                                     </tr>
                                 </tfoot>
                             </table>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

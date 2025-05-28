@@ -1,5 +1,3 @@
-
-
 <?php
 session_start();
 include 'config/database.php';
@@ -225,7 +223,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php foreach ($products as $product): ?>
                             <div class="col-md-4 mb-4">
                                 <div class="card product-card">
-                                    <img src="<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo $product['name']; ?>">
+                                    <?php if ($product['image']): ?>
+                                        <img src="uploads/products/<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                                    <?php else: ?>
+                                        <img src="images/no-image.jpg" class="card-img-top" alt="No image">
+                                    <?php endif; ?>
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo $product['name']; ?></h5>
                                         <p class="card-text text-primary fw-bold">
