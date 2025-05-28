@@ -41,7 +41,7 @@ try {
     <link href="css/style.css" rel="stylesheet">
      <style>
         /* Header */
-        header{
+        .navbar{
           position: fixed;
           width: 100%;
           z-index: 20;
@@ -154,67 +154,7 @@ try {
 </head>
 <body>
     <!-- Header -->
-    <header class="bg-dark text-white">
-        <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-dark">
-                <a class="navbar-brand" href="index.php">SPORTISA</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse d-flex" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="index.php">Trang chủ</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Danh mục</a>
-                            <ul class="dropdown-menu">
-                               <?php foreach ($categories as $category): ?>
-                                    <li>
-                                        <a class="dropdown-item" href="products.php?category=<?php echo $category['categories_name']; ?>">
-                                            <?php echo htmlspecialchars($category['name']); ?>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="about.php">Giới thiệu</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="news.php">Tin tức</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="contact.php">Liên hệ</a>
-                        </li>
-                    </ul>
-                    <div class="d-flex">
-                        <a href="cart.php" class="btn btn-outline-light me-2">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span class="badge bg-danger">0</span>
-                        </a>
-                        <?php if (isset($_SESSION['user_id'])): ?>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
-                                    <?php echo htmlspecialchars($_SESSION['username']); ?>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="profile.php">Tài khoản</a></li>
-                                    <li><a class="dropdown-item" href="orders.php">Đơn hàng</a></li>
-                                    <li><a class="dropdown-item" href="change_password.php">Đổi mật khẩu</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="logout.php">Đăng xuất</a></li>
-                                </ul>
-                            </div>
-                        <?php else: ?>
-                            <a href="login.php" class="btn btn-outline-light">Đăng nhập</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </nav>
-        </div>
-    </header>
-
+   <?php include './includes/header.php'?>
     <!-- Hero Section -->
     <section class="hero bg-primary text-white py-5">
         <div class="container">
@@ -330,7 +270,7 @@ try {
     </div>
     </section>
 
- main
+
         <div class="container">
             <h2 class="text-center mb-4">Tin tức</h2>
             <div class="row">
@@ -352,7 +292,7 @@ try {
                 <?php endforeach; ?>
             </div>
         </div>
-    </section>      -->     
+    </section>     
 
     <!-- Footer -->
     <footer class="bg-dark text-white py-4">
