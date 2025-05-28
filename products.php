@@ -4,65 +4,25 @@
 session_start();
 include 'config/database.php';
 
-// Lấy danh mục từ URL
+// ProductsModel.php
+require_once 'models/ProductsModel.php';
+
+// ProductsController.php
+require_once 'controllers/ProductsController.php';
+
+// Khởi tạo model và controller
+$productsModel = new ProductsModel($conn);
+$productsController = new ProductsController($productsModel);
+
+// Lấy dữ liệu từ request
 $category = isset($_GET['category']) ? $_GET['category'] : '';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 $price_range = isset($_GET['price']) ? $_GET['price'] : '';
 
-// Lấy danh sách danh mục
-$query_categories = "SELECT * FROM categories";
-$stmt_categories = $conn->prepare($query_categories);
-$stmt_categories->execute();
-$categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
-
-// Xây dựng câu truy vấn
-$query = "SELECT p.*, c.categories_name FROM products p 
-          LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
-$params = [];
-
-if ($category) {
-    $query .= " AND c.categories_name = ?";
-    $params[] = $category;
-}
-
-if ($search) {
-    $query .= " AND (p.name LIKE ? OR p.description LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-if ($price_range) {
-    if ($price_range == '0-500000') {
-        $query .= " AND p.price BETWEEN 0 AND 500000";
-    } elseif ($price_range == '500000-1000000') {
-        $query .= " AND p.price BETWEEN 500000 AND 1000000";
-    } elseif ($price_range == '1000000-2000000') {
-        $query .= " AND p.price BETWEEN 1000000 AND 2000000";
-    } elseif ($price_range == '2000000-') {
-        $query .= " AND p.price > 2000000";
-    }
-}
-
-// Sắp xếp
-switch ($sort) {
-    case 'price_asc':
-        $query .= " ORDER BY p.price ASC";
-        break;
-    case 'price_desc':
-        $query .= " ORDER BY p.price DESC";
-        break;
-    case 'name':
-        $query .= " ORDER BY p.name ASC";
-        break;
-    default:
-        $query .= " ORDER BY p.created_at DESC";
-}
-
-// Thực hiện truy vấn
-$stmt = $conn->prepare($query);
-$stmt->execute($params);
-$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Lấy danh sách danh mục và sản phẩm
+$categories = $productsController->getCategories();
+$products = $productsController->getProducts($_GET);
 ?>
 
 <!DOCTYPE html>

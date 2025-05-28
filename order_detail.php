@@ -2,48 +2,18 @@
 session_start();
 include 'config/database.php';
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
+// DetailModel: Xử lý dữ liệu đơn hàng
+require_once 'models/DetailModel.php';
 
-// Kiểm tra ID đơn hàng
-if (!isset($_GET['id'])) {
-    header("Location: orders.php");
-    exit();
-}
+// DetailController: Điều khiển luồng xử lý
+require_once 'controllers/DetailController.php';
 
-$order_id = intval($_GET['id']);
-
-// Lấy thông tin đơn hàng
-try {
-    $stmt = $conn->prepare("
-        SELECT o.*, u.full_name, u.phone, u.address 
-        FROM orders o 
-        JOIN users u ON o.user_id = u.id 
-        WHERE o.id = ? AND o.user_id = ?
-    ");
-    $stmt->execute([$order_id, $_SESSION['user_id']]);
-    $order = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$order) {
-        header("Location: orders.php");
-        exit();
-    }
-
-    // Lấy chi tiết đơn hàng
-    $stmt = $conn->prepare("
-        SELECT od.*, p.name, p.image 
-        FROM order_details od 
-        JOIN products p ON od.product_id = p.id 
-        WHERE od.order_id = ?
-    ");
-    $stmt->execute([$order_id]);
-    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch(PDOException $e) {
-    $error = 'Có lỗi xảy ra: ' . $e->getMessage();
-}
+// Khởi tạo controller và lấy dữ liệu
+$controller = new DetailController($conn);
+$order_id = $controller->order_id;
+$order = $controller->order;
+$order_details = $controller->order_details;
+$error = $controller->error;
 ?>
 
 <!DOCTYPE html>

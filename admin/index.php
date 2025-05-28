@@ -1,60 +1,151 @@
 <?php
 session_start();
-include '../config/database.php';
+require_once '../config/database.php';
 
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
-    exit();
+class AdminDashboard {
+    private $conn;
+    private $error;
+    
+    public function __construct($db_connection) {
+        $this->conn = $db_connection;
+    }
+    
+    public function checkAdminAccess() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+            header("Location: login.php");
+            exit();
+        }
+    }
+    
+    public function getTotalOrders() {
+        try {
+            $stmt = $this->conn->query("SELECT COUNT(*) FROM orders");
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = 'Error getting total orders: ' . $e->getMessage();
+            return 0;
+        }
+    }
+    
+    public function getTotalProducts() {
+        try {
+            $stmt = $this->conn->query("SELECT COUNT(*) FROM products");
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = 'Error getting total products: ' . $e->getMessage();
+            return 0;
+        }
+    }
+    
+    public function getTotalUsers() {
+        try {
+            $stmt = $this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'user'");
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            $this->error = 'Error getting total users: ' . $e->getMessage();
+            return 0;
+        }
+    }
+    
+    public function getTotalRevenue() {
+        try {
+            $stmt = $this->conn->query("SELECT SUM(total_amount) FROM orders WHERE status = 'delivered'");
+            return $stmt->fetchColumn() ?? 0;
+        } catch (PDOException $e) {
+            $this->error = 'Error getting total revenue: ' . $e->getMessage();
+            return 0;
+        }
+    }
+    
+    public function getRecentOrders($limit = 5) {
+        try {
+            $stmt = $this->conn->prepare("SELECT o.*, u.username, u.full_name 
+                                         FROM orders o 
+                                         JOIN users u ON o.user_id = u.id 
+                                         ORDER BY o.created_at DESC 
+                                         LIMIT :limit");
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = 'Error getting recent orders: ' . $e->getMessage();
+            return [];
+        }
+    }
+    
+    public function getTopProducts($limit = 5) {
+        try {
+            $stmt = $this->conn->prepare("SELECT p.id, p.name, p.image, p.price, COUNT(oi.id) as order_count, SUM(oi.quantity) as total_quantity
+                                       FROM products p
+                                       JOIN order_items oi ON p.id = oi.product_id
+                                       JOIN orders o ON oi.order_id = o.id
+                                       WHERE o.status = 'delivered'
+                                       GROUP BY p.id
+                                       ORDER BY total_quantity DESC
+                                       LIMIT :limit");
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = 'Error getting top products: ' . $e->getMessage();
+            return [];
+        }
+    }
+    
+    public function getRecentReviews($limit = 5) {
+        try {
+            $stmt = $this->conn->prepare("SELECT r.*, u.username, p.name as product_name
+                                       FROM reviews r
+                                       JOIN users u ON r.user_id = u.id
+                                       JOIN products p ON r.product_id = p.id
+                                       ORDER BY r.created_at DESC
+                                       LIMIT :limit");
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->error = 'Error getting recent reviews: ' . $e->getMessage();
+            return [];
+        }
+    }
+    
+    public function getError() {
+        return $this->error;
+    }
+    
+    public function formatCurrency($amount) {
+        return number_format($amount, 0, ',', '.') . ' VNĐ';
+    }
+    
+    public function formatDate($dateString) {
+        return date('d/m/Y H:i', strtotime($dateString));
+    }
+    
+    public function getStatusBadge($status) {
+        $statuses = [
+            'pending' => ['class' => 'warning', 'text' => 'Chờ xử lý'],
+            'processing' => ['class' => 'info', 'text' => 'Đang xử lý'],
+            'shipped' => ['class' => 'primary', 'text' => 'Đang giao hàng'],
+            'delivered' => ['class' => 'success', 'text' => 'Đã giao hàng'],
+            'cancelled' => ['class' => 'danger', 'text' => 'Đã hủy']
+        ];
+        
+        return $statuses[$status] ?? ['class' => 'secondary', 'text' => $status];
+    }
 }
 
+// Usage
+$dashboard = new AdminDashboard($conn);
+$dashboard->checkAdminAccess();
 
-try {
-   
-    $stmt = $conn->query("SELECT COUNT(*) FROM orders");
-    $total_orders = $stmt->fetchColumn();
-
-   
-    $stmt = $conn->query("SELECT COUNT(*) FROM products");
-    $total_products = $stmt->fetchColumn();
-
-  
-    $stmt = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'user'");
-    $total_users = $stmt->fetchColumn();
-
-   
-    $stmt = $conn->query("SELECT SUM(total_amount) FROM orders WHERE status = 'delivered'");
-    $total_revenue = $stmt->fetchColumn();
-
-    $stmt = $conn->query("SELECT o.*, u.username, u.full_name 
-                         FROM orders o 
-                         JOIN users u ON o.user_id = u.id 
-                         ORDER BY o.created_at DESC 
-                         LIMIT 5");
-    $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-     $stmt = $conn->query("SELECT p.id, p.name, p.image, p.price, COUNT(oi.id) as order_count, SUM(oi.quantity) as total_quantity
-                     FROM products p
-                     JOIN order_items oi ON p.id = oi.product_id
-                     JOIN orders o ON oi.order_id = o.id
-                     WHERE o.status = 'delivered'
-                     GROUP BY p.id
-                     ORDER BY total_quantity DESC
-                     LIMIT 5");
-    $top_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-   
-    $stmt = $conn->query("SELECT r.*, u.username, p.name as product_name
-                         FROM reviews r
-                         JOIN users u ON r.user_id = u.id
-                         JOIN products p ON r.product_id = p.id
-                         ORDER BY r.created_at DESC
-                         LIMIT 5");
-    $recent_reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch(PDOException $e) {
-    $error = 'Có lỗi xảy ra: ' . $e->getMessage();
-}
+$total_orders = $dashboard->getTotalOrders();
+$total_products = $dashboard->getTotalProducts();
+$total_users = $dashboard->getTotalUsers();
+$total_revenue = $dashboard->getTotalRevenue();
+$recent_orders = $dashboard->getRecentOrders();
+$top_products = $dashboard->getTopProducts();
+$recent_reviews = $dashboard->getRecentReviews();
+$error = $dashboard->getError();
 ?>
 
 <!DOCTYPE html>
@@ -71,7 +162,7 @@ try {
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <?php include 'sidebar.php'; ?>     
+            <?php include '../admin/view/sidebar.php'; ?>    
 
             <!-- Main content -->
             <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -118,7 +209,7 @@ try {
                         <div class="card bg-warning text-white">
                             <div class="card-body">
                                 <h5 class="card-title">Tổng doanh thu</h5>
-                                <h2 class="card-text"><?php echo number_format($total_revenue, 0, ',', '.'); ?> VNĐ</h2>
+                                <h2 class="card-text"><?php echo $dashboard->formatCurrency($total_revenue); ?></h2>
                             </div>
                         </div>
                     </div>
@@ -148,38 +239,14 @@ try {
                                                 <tr>
                                                     <td>#<?php echo $order['id']; ?></td>
                                                     <td><?php echo htmlspecialchars($order['full_name']); ?></td>
-                                                    <td><?php echo number_format($order['total_amount'], 0, ',', '.'); ?> VNĐ</td>
+                                                    <td><?php echo $dashboard->formatCurrency($order['total_amount']); ?></td>
                                                     <td>
-                                                        <?php
-                                                        $status_class = '';
-                                                        switch ($order['status']) {
-                                                            case 'pending':
-                                                                $status_class = 'warning';
-                                                                $status_text = 'Chờ xử lý';
-                                                                break;
-                                                            case 'processing':
-                                                                $status_class = 'info';
-                                                                $status_text = 'Đang xử lý';
-                                                                break;
-                                                            case 'shipped':
-                                                                $status_class = 'primary';
-                                                                $status_text = 'Đang giao hàng';
-                                                                break;
-                                                            case 'delivered':
-                                                                $status_class = 'success';
-                                                                $status_text = 'Đã giao hàng';
-                                                                break;
-                                                            case 'cancelled':
-                                                                $status_class = 'danger';
-                                                                $status_text = 'Đã hủy';
-                                                                break;
-                                                        }
-                                                        ?>
-                                                        <span class="badge bg-<?php echo $status_class; ?>">
-                                                            <?php echo $status_text; ?>
+                                                        <?php $status = $dashboard->getStatusBadge($order['status']); ?>
+                                                        <span class="badge bg-<?php echo $status['class']; ?>">
+                                                            <?php echo $status['text']; ?>
                                                         </span>
                                                     </td>
-                                                    <td><?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?></td>
+                                                    <td><?php echo $dashboard->formatDate($order['created_at']); ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -190,45 +257,46 @@ try {
                     </div>
 
                     <!-- Sản phẩm bán chạy -->
-                    <!-- Sản phẩm bán chạy -->
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Sản phẩm bán chạy</h5>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Sản phẩm bán chạy</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Sản phẩm</th>
+                                                <th>Số lượng bán</th>
+                                                <th>Doanh thu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($top_products as $product): ?>
+                                                <tr>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <?php if ($product['image']): ?>
+                                                                <img src="../uploads/products/<?php echo $product['image']; ?>" 
+                                                                     alt="<?php echo htmlspecialchars($product['name']); ?>" 
+                                                                     class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                            <?php endif; ?>
+                                                            <?php echo htmlspecialchars($product['name']); ?>
+                                                        </div>
+                                                    </td>
+                                                    <td><?php echo number_format($product['total_quantity']); ?></td>
+                                                    <td><?php echo $dashboard->formatCurrency($product['price'] * $product['total_quantity']); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Số lượng bán</th>
-                                        <th>Doanh thu</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($top_products as $product): ?>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <?php if ($product['image']): ?>
-                                                        <img src="../uploads/products/<?php echo $product['image']; ?>" 
-                                                             alt="<?php echo htmlspecialchars($product['name']); ?>" 
-                                                             class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                                    <?php endif; ?>
-                                                    <?php echo htmlspecialchars($product['name']); ?>
-                                                </div>
-                                            </td>
-                                            <td><?php echo number_format($product['total_quantity']); ?></td>
-                                            <td><?php echo number_format($product['price'] * $product['total_quantity'], 0, ',', '.'); ?> VNĐ</td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                     </div>
                 </div>
+                
                 <!-- Đánh giá mới nhất -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -257,7 +325,7 @@ try {
                                                 <?php endfor; ?>
                                             </td>
                                             <td><?php echo htmlspecialchars($review['comment']); ?></td>
-                                            <td><?php echo date('d/m/Y H:i', strtotime($review['created_at'])); ?></td>
+                                            <td><?php echo $dashboard->formatDate($review['created_at']); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
