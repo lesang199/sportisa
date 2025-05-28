@@ -2,89 +2,31 @@
 session_start();
 include 'config/database.php';
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
 
-// Kiểm tra giỏ hàng
-if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
-    header("Location: cart.php");
-    exit();
-}
+require_once 'models/CheckoutModel.php';
+require_once 'controllers/CheckoutController.php';
 
-// Lấy thông tin người dùng
-$query = "SELECT * FROM users WHERE id = ?";
-$stmt = $conn->prepare($query);
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$model = new CheckoutModel($conn);
+$controller = new CheckoutController($conn, $model);
 
-// Tính tổng tiền
-$total = 0;
-foreach ($_SESSION['cart'] as $item) {
-    $total += $item['price'] * $item['quantity'];
-}
-$shipping = $total >= 1000000 ? 0 : 30000;
+// Kiểm tra session đăng nhập và giỏ hàng
+$controller->validateSession();
+
+// Tính tổng, phí vận chuyển và grand total (nếu cần sử dụng cho việc hiển thị)
+$cart = $_SESSION['cart'];
+$total = $controller->calculateTotal($cart);
+$shipping = $controller->calculateShipping($total);
 $grand_total = $total + $shipping;
 
-// Xử lý thanh toán
+// Lấy thông tin người dùng (để hiển thị thông tin đơn hàng)
+$user = $controller->getUserInfo();
+
+// Xử lý thanh toán khi nhận POST request
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $payment_method = $_POST['payment_method'];
-    $shipping_address = $_POST['shipping_address'];
-    $notes = $_POST['notes'];
-
-    try {
-        // Bắt đầu transaction
-        $conn->beginTransaction();
-
-        // Tạo đơn hàng
-        $query = "INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address, notes, created_at) 
-                  VALUES (?, ?, 'pending', ?, ?, ?, NOW())";
-        $stmt = $conn->prepare($query);
-        $stmt->execute([$_SESSION['user_id'], $grand_total, $payment_method, $shipping_address, $notes]);
-        $order_id = $conn->lastInsertId();
-
-        // Thêm chi tiết đơn hàng
-        foreach ($_SESSION['cart'] as $item) {
-            // Kiểm tra số lượng tồn kho
-            $check_stock_query = "SELECT stock FROM products WHERE id = ?";
-            $check_stmt = $conn->prepare($check_stock_query);
-            $check_stmt->execute([$item['id']]);
-            $stock = $check_stmt->fetchColumn();
-
-            if ($stock < $item['quantity']) {
-                throw new Exception("Sản phẩm " . $item['name'] . " không đủ số lượng tồn kho");
-            }
-
-            // Thêm chi tiết đơn hàng
-            $query = "INSERT INTO order_items (order_id, product_id, quantity, price) 
-                      VALUES (?, ?, ?, ?)";
-            $stmt = $conn->prepare($query);
-            $stmt->execute([$order_id, $item['id'], $item['quantity'], $item['price']]);
-
-            // Cập nhật số lượng tồn kho
-            $query = "UPDATE products SET stock = stock - ? WHERE id = ?";
-            $stmt = $conn->prepare($query);
-            $stmt->execute([$item['quantity'], $item['id']]);
-        }
-
-        // Commit transaction
-        $conn->commit();
-
-        // Xóa giỏ hàng
-        unset($_SESSION['cart']);
-
-        // Chuyển hướng đến trang cảm ơn
-        header("Location: thank_you.php?order_id=" . $order_id);
-        exit();
-
-    } catch (Exception $e) {
-        // Rollback transaction
-        $conn->rollBack();
-        $error = $e->getMessage();
-    }
+    $controller->processCheckout($_POST, $cart);
+    $error = $controller->getError();
 }
+
 ?>
 
 <!DOCTYPE html>

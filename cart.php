@@ -2,29 +2,12 @@
 session_start();
 include 'config/database.php';
 
-// Xử lý cập nhật giỏ hàng
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['update_cart'])) {
-        foreach ($_POST['quantity'] as $id => $quantity) {
-            if ($quantity <= 0) {
-                unset($_SESSION['cart'][$id]);
-            } else {
-                $_SESSION['cart'][$id]['quantity'] = $quantity;
-            }
-        }
-    } elseif (isset($_POST['remove_item'])) {
-        $id = $_POST['remove_item'];
-        unset($_SESSION['cart'][$id]);
-    }
-}
+require_once 'controllers/cartcontroller.php';
 
-// Tính tổng tiền
-$total = 0;
-if (isset($_SESSION['cart'])) {
-    foreach ($_SESSION['cart'] as $item) {
-        $total += $item['price'] * $item['quantity'];
-    }
-}
+// Usage
+$cartController = new CartController();
+$cartController->handleRequest();
+$total = $cartController->calculateTotal();
 ?>
 
 <!DOCTYPE html>
