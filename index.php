@@ -46,6 +46,9 @@ try {
           width: 100%;
           z-index: 20;
         }
+        .dropdown-menu-end li:last-child {
+         border-top: 2px solid #3333;
+         }
  
         /* Hero */
         .hero{

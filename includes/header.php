@@ -44,7 +44,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="profile.php">Tài khoản</a></li>
                             <li><a class="dropdown-item" href="orders.php">Đơn hàng</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="change_password.php">Đổi mật khẩu</a></li>                            
                             <li><a class="dropdown-item" href="logout.php">Đăng xuất</a></li>
                         </ul>
                     </div>
