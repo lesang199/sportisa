@@ -2,21 +2,27 @@
 require_once 'config/database.php';
 session_start();
 
+
+// Model class
+require_once 'models/profilemodel.php';
+
+
+// Controller class
+require_once 'controllers/profilecontroller.php';
+
 // Kiểm tra session email
 if (!isset($_SESSION['email'])) {
-    header("Location: login.php");
-    exit;
+  header("Location: login.php");
+  exit;
 }
 
 try {
-    $email = $_SESSION['email'];
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = :email");
-    $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-    $stmt->execute();
-    $user = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $profileModel = new ProfileModel($conn);
+  $profileController = new ProfileController($profileModel);
+  $user = $profileController->getProfile($_SESSION['email']);
 } catch (PDOException $e) {
-    echo '<div class="alert alert-danger text-center">Có lỗi xảy ra: ' . $e->getMessage() . '</div>';
-    exit;
+  echo '<div class="alert alert-danger text-center">Có lỗi xảy ra: ' . $e->getMessage() . '</div>';
+  exit;
 }
 ?>
 

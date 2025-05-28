@@ -5,26 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Giới thiệu - Sportisa</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
-    }
-    .intro-section {
-      padding: 60px 20px;
-    }
-    .highlight {
-      color: #198754;
-      font-weight: bold;
-    }
-    .slogan {
-      font-size: 1.25rem;
-      font-style: italic;
-      color: #6c757d;
-      margin-top: 10px;
-    }
-    
-  </style>
+  <?php require 'views/aboutview.php'; ?>
 </head>
 <body>
 

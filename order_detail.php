@@ -2,19 +2,8 @@
 session_start();
 include 'config/database.php';
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// Kiểm tra ID đơn hàng
-if (!isset($_GET['id'])) {
-    header("Location: orders.php");
-    exit();
-}
-
-$order_id = intval($_GET['id']);
+// DetailModel: Xử lý dữ liệu đơn hàng
+require_once 'models/DetailModel.php';
 
 // Lấy thông tin đơn hàng
 try {
@@ -33,23 +22,14 @@ try {
     }
 
     // Lấy chi tiết đơn hàng
-    try {
-        $stmt = $conn->prepare("
-            SELECT od.*, p.name, p.image 
-            FROM order_items od 
-            JOIN products p ON od.product_id = p.id 
-            WHERE od.order_id = ?
-        ");
-        $stmt->execute([$order_id]);
-        $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        if (empty($order_details)) {
-            $error = 'Không tìm thấy chi tiết đơn hàng';
-        }
-    } catch(PDOException $e) {
-        $error = 'Lỗi khi lấy chi tiết đơn hàng: ' . $e->getMessage();
-        $order_details = [];
-    }
+    $stmt = $conn->prepare("
+        SELECT od.*, p.name, p.image 
+        FROM order_details od 
+        JOIN products p ON od.product_id = p.id 
+        WHERE od.order_id = ?
+    ");
+    $stmt->execute([$order_id]);
+    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
     $error = 'Có lỗi xảy ra: ' . $e->getMessage();
 }

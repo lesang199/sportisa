@@ -2,32 +2,21 @@
 session_start();
 include 'config/database.php';
 
-// Lấy danh sách sản phẩm nổi bật
-try {
-    $stmt = $conn->query("SELECT p.*, c.name as category_name, b.name as brand_name 
-                         FROM products p 
-                         LEFT JOIN categories c ON p.category_id = c.id 
-                         LEFT JOIN brands b ON p.brand_id = b.id 
-                         WHERE p.featured = 1 AND p.status = 'active'
-                         ORDER BY p.created_at DESC 
-                         LIMIT 8");
-    $featured_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once 'models/indexmodel.php';
+require_once 'controllers/indexcontroller.php';
 
-    // Lấy danh sách danh mục
-    $stmt = $conn->query("SELECT * FROM categories WHERE status = 'active'");
-    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$model = new IndexModel($conn);
+$controller = new IndexController($model);
 
-    // Lấy danh sách thương hiệu
-    $stmt = $conn->query("SELECT * FROM brands WHERE status = 'active'");
-    $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Lấy dữ liệu trang chủ
+$data = $controller->loadHomepageData();
 
-    // Lấy tin tức mới nhất
-    $stmt = $conn->query("SELECT * FROM news WHERE status = 'published' ORDER BY created_at DESC LIMIT 3");
-    $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$featured_products = $data['featured_products'] ?? [];
+$categories = $data['categories'] ?? [];
+$brands = $data['brands'] ?? [];
+$news = $data['news'] ?? [];
+$error = $controller->getError();
 
-} catch(PDOException $e) {
-    $error = 'Có lỗi xảy ra: ' . $e->getMessage();
-}
 ?>
 
 <!DOCTYPE html>
@@ -39,118 +28,7 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-     <style>
-        /* Header */
-        header{
-          position: fixed;
-          width: 100%;
-          z-index: 20;
-        }
- 
-        /* Hero */
-        .hero{
-            position: relative;
-            top: 47px;
-        }
-        /* Cources */
-      .carousel-container {
-        width: 100%;
-        height: 480px;
-        background-color: aliceblue;
-        position: relative;
-        overflow: hidden;
-        top: 50px;
-         display: flex;
-       justify-content: center;
-       align-items: center;
-   background-color: #378d570f;
-   }
-
-.carousel-img {
-  display: flex;
-  transition: transform 0.5s ease;
-  width: 100%;
-  height: 100%;
-}
-
-.carousel-img img {
-  width: 100%;
-  height: 100%;
-  flex-shrink: 0;
-  object-fit:fill;
-}
-
-.arrow-icon-left,
-.arrow-icon-right {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  z-index: 10;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 10px;
-  border-radius: 50%;
-  transition: 0.3s;
-}
-.carousel-inner-custom {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 90%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.arrow-icon-left:hover,
-.arrow-icon-right:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.arrow-icon-left {
-  left: 10px;
-}
-
-.arrow-icon-right {
-  right: 10px;
-}
-
-.arrow-icon-left i,
-.arrow-icon-right i {
-  font-size: 24px;
-  color: white;
-}
-/* Features */
-.features h2{
-  padding-top: 50px;
-}
-
-/* Brands */
-.card {
-  position: relative;
-  overflow: hidden;
-}
-
-.card-body.overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.5); /* Nền mờ */
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  text-align: center;
-}
-
-.card:hover .card-body.overlay {
-  opacity: 1;
-}
-
-</style>
+    <?php require 'views/indexview.php'; ?>
 </head>
 <body>
     <!-- Header -->
@@ -191,12 +69,12 @@ try {
                     <div class="d-flex">
                         <a href="cart.php" class="btn btn-outline-light me-2">
                             <i class="fas fa-shopping-cart"></i>
-                            <span class="badge bg-danger">0</span>
+                            <span class="badge bg-danger"><?php echo isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0; ?></span>
                         </a>
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <div class="dropdown">
-                                <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
-                                    <?php echo htmlspecialchars($_SESSION['username']); ?>
+                                <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> <?php echo $_SESSION['username']; ?>
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="profile.php">Tài khoản</a></li>
@@ -331,38 +209,7 @@ try {
  
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>Về chúng tôi</h5>
-                    <p>SPORTISA - Cửa hàng thể thao chính hãng hàng đầu Việt Nam.</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Liên hệ</h5>
-                    <p>
-                        <i class="fas fa-map-marker-alt"></i> 279 Nguyễn Tri Phương phường 5, quận 10, TP.HCM<br>
-                        <i class="fas fa-clock"></i> Thứ 2 - Thứ 7: 8:00 - 17:30<br>
-                        <i class="fas fa-clock"></i> Chủ nhật: 9:00 - 16:00<br> 
-                        <i class="fas fa-phone"></i> 0902776587 - 0768628855<br>
-                        <i class="fas fa-envelope"></i> contact@sportisa.com
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Theo dõi chúng tôi</h5>
-                    <div class="social-links">
-                        <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center">
-                <p class="mb-0">&copy; <?php echo date('Y'); ?> SPORTISA. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+    <?php require 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

@@ -1,39 +1,69 @@
 <?php
 session_start();
-include '../config/database.php';
+require_once '../config/database.php';
 
-// Kiểm tra quyền admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
-}
-
-// Xử lý cập nhật trạng thái đơn hàng
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['order_id']) && isset($_POST['status'])) {
-    $order_id = $_POST['order_id'];
-    $status = $_POST['status'];
-
-    try {
-        $query = "UPDATE orders SET status = ? WHERE id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->execute([$status, $order_id]);
-        
-        $_SESSION['success'] = "Đã cập nhật trạng thái đơn hàng thành công";
-    } catch (PDOException $e) {
-        $_SESSION['error'] = "Có lỗi xảy ra: " . $e->getMessage();
+class OrderManager {
+    private $conn;
+    
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+    
+    public function checkAdminAccess() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+            header("Location: ../login.php");
+            exit();
+        }
+    }
+    
+    public function updateOrderStatus($order_id, $status) {
+        try {
+            $query = "UPDATE orders SET status = ? WHERE id = ?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([$status, $order_id]);
+            
+            $_SESSION['success'] = "Đã cập nhật trạng thái đơn hàng thành công";
+            return true;
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Có lỗi xảy ra: " . $e->getMessage();
+            return false;
+        }
+    }
+    
+    public function getAllOrders() {
+        try {
+            $query = "SELECT o.*, u.username, u.email, 
+                     (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
+                     (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_quantity
+                     FROM orders o 
+                     JOIN users u ON o.user_id = u.id 
+                     ORDER BY o.created_at ASC";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $_SESSION['error'] = "Có lỗi xảy ra khi lấy danh sách đơn hàng: " . $e->getMessage();
+            return [];
+        }
     }
 }
 
-// Lấy danh sách đơn hàng
-$query = "SELECT o.*, u.username, u.email, 
-          (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
-          (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as total_quantity
-          FROM orders o 
-          JOIN users u ON o.user_id = u.id 
-          ORDER BY o.created_at DESC";
-$stmt = $conn->prepare($query);
-$stmt->execute();
-$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Initialize OrderManager
+$orderManager = new OrderManager($conn);
+
+// Check admin access
+$orderManager->checkAdminAccess();
+
+// Handle status update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['order_id']) && isset($_POST['status'])) {
+    $order_id = $_POST['order_id'];
+    $status = $_POST['status'];
+    $orderManager->updateOrderStatus($order_id, $status);
+}
+
+// Get all orders
+$orders = $orderManager->getAllOrders();
 ?>
 
 <!DOCTYPE html>
@@ -45,17 +75,14 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
-
 </head>
 <body>
     <div class="container-fluid">
-      
-    <div class="row">
-        <?php include 'sidebar.php'; ?> 
+        <div class="row">
+            <?php include '../admin/view/sidebar.php'; ?> 
 
-    <!-- Nội dung chính -->
-    <div class="col-md-9 col-lg-10">
-
+            <!-- Main content -->
+            <div class="col-md-9 col-lg-10">
                 <div class="card">
                     <div class="card-header">
                         <h4>Quản lý đơn hàng</h4>
@@ -133,8 +160,6 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
-
-    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/main.js"></script>
