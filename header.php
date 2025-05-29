@@ -1,6 +1,18 @@
 <?php
 
 include 'config/database.php';
+// Đếm số lượng sản phẩm trong giỏ hàng
+// Đếm số lượng sản phẩm trong giỏ hàng
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$cart_count = 0;
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $item) {
+        $cart_count += isset($item['quantity']) ? $item['quantity'] : 1;
+    }
+}
+
 
 // Lấy danh sách danh mục
 try {
@@ -52,10 +64,10 @@ try {
                     </ul>
                     <div class="d-flex align-items-center">
                         <a href="cart.php" class="btn btn-outline-dark me-2 position-relative">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                0
-                            </span>
+                         <i class="fas fa-shopping-cart"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                          <?php echo $cart_count; ?>
+                        </span>
                         </a>
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <div class="dropdown">
