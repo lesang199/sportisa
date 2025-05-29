@@ -2,7 +2,13 @@
 session_start();
 include 'config/database.php';
 
-// Kiểm tra ID đơn hàng
+// Kiểm tra đăng nhập
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Kiểm tra order_id
 if (!isset($_GET['order_id'])) {
     header("Location: index.php");
     exit();
@@ -14,24 +20,15 @@ $order_id = $_GET['order_id'];
 $query = "SELECT o.*, u.username, u.email 
           FROM orders o 
           JOIN users u ON o.user_id = u.id 
-          WHERE o.id = ?";
+          WHERE o.id = ? AND o.user_id = ?";
 $stmt = $conn->prepare($query);
-$stmt->execute([$order_id]);
+$stmt->execute([$order_id, $_SESSION['user_id']]);
 $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
     header("Location: index.php");
     exit();
 }
-
-// Lấy chi tiết đơn hàng
-$query = "SELECT oi.*, p.name, p.image 
-          FROM order_items oi 
-          JOIN products p ON oi.product_id = p.id 
-          WHERE oi.order_id = ?";
-$stmt = $conn->prepare($query);
-$stmt->execute([$order_id]);
-$order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -39,87 +36,91 @@ $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cảm ơn - SPORTISA</title>
+    <title>Cảm ơn bạn đã đặt hàng - SPORTISA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <style>
+        .thank-you-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+        .thank-you-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 5rem;
+            color: #28a745;
+            margin-bottom: 1.5rem;
+        }
+        .order-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .order-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .order-info:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+    </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include 'header.php'; ?>
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <div class="mb-4">
-                            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
-                        </div>
-                        <h2 class="mb-4">Cảm ơn bạn đã đặt hàng!</h2>
-                        <p class="mb-4">Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.</p>
-                        <div class="mb-4">
-                            <p>Mã đơn hàng: <strong>#<?php echo $order_id; ?></strong></p>
-                            <p>Ngày đặt hàng: <strong><?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?></strong></p>
-                            <p>Tổng tiền: <strong><?php echo number_format($order['total_amount'], 0, ',', '.'); ?> VNĐ</strong></p>
-                        </div>
-                        <div class="mb-4">
-                            <h5>Thông tin đơn hàng</h5>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Số lượng</th>
-                                        <th>Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($order_items as $item): ?>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <?php if ($item['image']): ?>
-                                                    <img src="uploads/products/<?php echo $item['image']; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="img-thumbnail me-2" style="width: 50px;">
-                                                <?php else: ?>
-                                                    <img src="images/no-image.jpg" alt="No image" class="img-thumbnail me-2" style="width: 50px;">
-                                                <?php endif; ?>
-                                                <?php echo htmlspecialchars($item['name']); ?>
-                                            </div>
-                                        </td>
-                                        <td><?php echo $item['quantity']; ?></td>
-                                        <td><?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?> VNĐ</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mb-4">
-                            <h5>Thông tin giao hàng</h5>
-                            <p><strong>Người nhận:</strong> <?php echo htmlspecialchars($order['username']); ?></p>
-                            <p><strong>Email:</strong> <?php echo htmlspecialchars($order['email']); ?></p>
-                            <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars($order['shipping_address']); ?></p>
-                            <p><strong>Phương thức thanh toán:</strong> 
-                                <?php 
-                                echo $order['payment_method'] == 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng';
-                                ?>
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-center">
-                            <a href="index.php" class="btn btn-primary me-2">
-                                <i class="fas fa-home"></i> Về trang chủ
-                            </a>
-                            <a href="orders.php" class="btn btn-outline-primary">
-                                <i class="fas fa-list"></i> Xem đơn hàng
-                            </a>
-                        </div>
-                    </div>
+    <div class="thank-you-container">
+        <div class="thank-you-card">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h1 class="mb-4">Cảm ơn bạn đã đặt hàng!</h1>
+            <p class="lead mb-4">Đơn hàng của bạn đã được đặt thành công và đang được xử lý.</p>
+            
+            <div class="order-details">
+                <div class="order-info">
+                    <span>Mã đơn hàng:</span>
+                    <strong>#<?php echo str_pad($order['id'], 8, '0', STR_PAD_LEFT); ?></strong>
+                </div>
+                <div class="order-info">
+                    <span>Tổng tiền:</span>
+                    <strong class="text-primary"><?php echo number_format($order['total_amount'], 0, ',', '.'); ?> VNĐ</strong>
+                </div>
+                <div class="order-info">
+                    <span>Phương thức thanh toán:</span>
+                    <strong><?php echo $order['payment_method'] == 'cod' ? 'Thanh toán khi nhận hàng' : 'Chuyển khoản ngân hàng'; ?></strong>
+                </div>
+                <div class="order-info">
+                    <span>Địa chỉ giao hàng:</span>
+                    <strong><?php echo htmlspecialchars($order['shipping_address']); ?></strong>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p class="text-muted mb-4">Chúng tôi sẽ gửi email xác nhận đến địa chỉ: <?php echo htmlspecialchars($order['email']); ?></p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="index.php" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>Về trang chủ
+                    </a>
+                    <a href="products.php" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart me-2"></i>Tiếp tục mua sắm
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/main.js"></script>
 </body>
-</html>
+</html> 

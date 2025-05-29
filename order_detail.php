@@ -2,10 +2,61 @@
 session_start();
 include 'config/database.php';
 
-// DetailModel: Xử lý dữ liệu đơn hàng
+
 require_once 'models/DetailModel.php';
 
-// Lấy thông tin đơn hàng
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+
+if (!isset($_GET['id'])) {
+    header("Location: orders.php");
+    exit();
+}
+$order_id = intval($_GET['id']);
+
+try {
+    $stmt = $conn->prepare("
+        SELECT o.*, u.full_name, u.phone, u.address 
+        FROM orders o 
+        JOIN users u ON o.user_id = u.id 
+        WHERE o.id = ? AND o.user_id = ?
+    ");
+    $stmt->execute([$order_id, $_SESSION['user_id']]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$order) {
+        header("Location: orders.php");
+        exit();
+    }
+
+   
+    try {
+        $stmt = $conn->prepare("
+            SELECT od.*, p.name, p.image 
+            FROM order_items od 
+            JOIN products p ON od.product_id = p.id 
+            WHERE od.order_id = ?
+        ");
+        $stmt->execute([$order_id]);
+        $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($order_items)) {
+            $error = 'Không tìm thấy chi tiết đơn hàng';
+        }
+    } catch(PDOException $e) {
+        $error = 'Lỗi khi lấy chi tiết đơn hàng: ' . $e->getMessage();
+        $order_items = [];
+    }
+} catch(PDOException $e) {
+    $error = 'Có lỗi xảy ra: ' . $e->getMessage();
+}
+
+
+
+
 try {
     $stmt = $conn->prepare("
         SELECT o.*, u.full_name, u.phone, u.address 
@@ -24,12 +75,12 @@ try {
     // Lấy chi tiết đơn hàng
     $stmt = $conn->prepare("
         SELECT od.*, p.name, p.image 
-        FROM order_details od 
+        FROM order_items od 
         JOIN products p ON od.product_id = p.id 
         WHERE od.order_id = ?
     ");
     $stmt->execute([$order_id]);
-    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $order_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
     $error = 'Có lỗi xảy ra: ' . $e->getMessage();
 }
@@ -43,10 +94,10 @@ try {
     <title>Chi tiết đơn hàng #<?php echo $order_id; ?> - SPORTISA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include 'header.php'; ?>
 
     <div class="container my-5">
         <div class="row">
@@ -127,7 +178,7 @@ try {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($order_details as $item): ?>
+                                    <?php foreach ($order_items as $item): ?>
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
@@ -160,7 +211,7 @@ try {
         </div>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

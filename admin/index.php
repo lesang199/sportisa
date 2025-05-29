@@ -130,7 +130,7 @@ class AdminDashboard {
             'cancelled' => ['class' => 'danger', 'text' => 'Đã hủy']
         ];
         
-        return $statuses[$status] ?? ['class' => 'secondary', 'text' => $status];
+        return $status[$status] ?? ['class' => 'secondary', 'text' => $status];
     }
 }
 
@@ -144,7 +144,7 @@ $total_users = $dashboard->getTotalUsers();
 $total_revenue = $dashboard->getTotalRevenue();
 $recent_orders = $dashboard->getRecentOrders();
 $top_products = $dashboard->getTopProducts();
-$recent_reviews = $dashboard->getRecentReviews();
+
 $error = $dashboard->getError();
 ?>
 
@@ -297,42 +297,8 @@ $error = $dashboard->getError();
                     </div>
                 </div>
                 
-                <!-- Đánh giá mới nhất -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Đánh giá mới nhất</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Người dùng</th>
-                                        <th>Sản phẩm</th>
-                                        <th>Đánh giá</th>
-                                        <th>Nội dung</th>
-                                        <th>Ngày đăng</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($recent_reviews as $review): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($review['username']); ?></td>
-                                            <td><?php echo htmlspecialchars($review['product_name']); ?></td>
-                                            <td>
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <i class="fas fa-star <?php echo $i <= $review['rating'] ? 'text-warning' : 'text-muted'; ?>"></i>
-                                                <?php endfor; ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($review['comment']); ?></td>
-                                            <td><?php echo $dashboard->formatDate($review['created_at']); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+               
+               
             </div>
         </div>
     </div>

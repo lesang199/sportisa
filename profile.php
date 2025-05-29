@@ -29,6 +29,7 @@ try {
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thông tin cá nhân</title>
@@ -39,6 +40,7 @@ try {
     }
   </style>
 </head>
+<?php include 'header.php'; ?>
 <body class="bg-light">
 
 <div class="container py-5">
@@ -50,10 +52,7 @@ try {
           <h3>Thông tin cá nhân</h3>
         </div>
 
-        <!-- Avatar -->
-        <div class="text-center mt-4 profile-avatar">
-          <img src="./images/IMG_E5015.JPG" alt="Avatar" class="rounded-circle border border-3 border-white shadow" width="120" height="120">
-        </div>
+        
 
         <!-- Body -->
         <?php if (!empty($user)): ?>
@@ -83,6 +82,7 @@ try {
     </div>
   </div>
 </div>
+<?php include 'footer.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -67,103 +67,168 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title><?php echo $product['name']; ?> - SPORTISA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+    <style>
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        .product-image {
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        .product-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .product-card:hover .product-overlay {
+            opacity: 1;
+        }
+        .product-actions {
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-actions {
+            transform: translateY(0);
+        }
+        .main-product-image {
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .main-product-image:hover {
+            transform: scale(1.02);
+        }
+        .product-info {
+            background: #fff;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .policy-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        .policy-card:hover {
+            transform: translateY(-3px);
+        }
+        .size-options {
+            margin-bottom: 1rem;
+        }
+        .size-option .btn {
+            min-width: 60px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .size-option .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn-check:checked + .btn {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include 'header.php'; ?>
 
     <div class="container py-5">
-        <div class="row">
+        <div class="row g-4">
             <!-- Hình ảnh sản phẩm -->
             <div class="col-md-6">
-                <div class="card mb-4">
-                    <?php if ($product['image']): ?>
-                        <img src="uploads/products/<?php echo $product['image']; ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                    <?php else: ?>
-                        <img src="images/no-image.jpg" class="card-img-top" alt="No image">
-                    <?php endif; ?>
-                </div>
-                <div class="row">
-                    <?php for ($i = 0; $i < 4; $i++): ?>
-                    <div class="col-3">
-                        <?php if ($product['image']): ?>
-                            <img src="uploads/products/<?php echo $product['image']; ?>" class="img-thumbnail" alt="Thumbnail">
-                        <?php else: ?>
-                            <img src="images/no-image.jpg" class="img-thumbnail" alt="No image">
-                        <?php endif; ?>
-                    </div>
-                    <?php endfor; ?>
+                <div class="position-relative">
+                    <img src="uploads/products/<?php echo $product['image']; ?>" 
+                         class="img-fluid main-product-image" 
+                         alt="<?php echo $product['name']; ?>">
                 </div>
             </div>
 
             <!-- Thông tin sản phẩm -->
             <div class="col-md-6">
-                <h1 class="mb-3"><?php echo $product['name']; ?></h1>
-                <div class="d-flex align-items-center mb-3">
-                    <div class="text-warning me-2">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
-                        <i class="fas fa-star-half-alt"></i>
-                    </div>
-                    <span class="text-muted">(4.5/5 - 100 đánh giá)</span>
-                </div>
-                <h2 class="text-primary mb-4">
-                    <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
-                </h2>
-                <p class="mb-4"><?php echo $product['description']; ?></p>
+                <div class="product-info">
+                    <h1 class="mb-3 fw-bold"><?php echo $product['name']; ?></h1>
+                    
+                    <h2 class="text-primary mb-4 fw-bold">
+                        <?php echo number_format($product['price'], 0, ',', '.'); ?> VNĐ
+                    </h2>
+                    <p class="mb-4 text-muted"><?php echo $product['description']; ?></p>
 
-                <div class="mb-4">
-                    <h5>Thông số kỹ thuật:</h5>
-                    <ul class="list-unstyled">
-                        <li><strong>Danh mục:</strong> <?php echo ucfirst($product['category_name']); ?></li>
-                        <li><strong>Màu sắc:</strong> <?php echo $product['color']; ?></li>
-                        <li><strong>Trọng lượng:</strong> <?php echo $product['weight']; ?></li>
-                        <li><strong>Xuất xứ:</strong> <?php echo $product['origin']; ?></li>
-                        <li><strong>Chất liệu:</strong> <?php echo $product['material']; ?></li>
-                        <li><strong>Tình trạng:</strong> 
-                            <?php if ($product['stock'] > 0): ?>
-                                <span class="text-success">Còn hàng</span>
-                            <?php else: ?>
-                                <span class="text-danger">Hết hàng</span>
-                            <?php endif; ?>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Chọn size -->
-                <div class="mb-3">
-                    <label for="sizeSelect" class="form-label"><strong>Chọn size:</strong></label>
-                    <select class="form-select" id="sizeSelect" name="size" required>
-                        <option value="">-- Chọn size --</option>
-                        <?php foreach ($sizes as $size): ?>
-                            <option value="<?php echo htmlspecialchars($size); ?>"><?php echo htmlspecialchars($size); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <!-- Tăng/giảm số lượng -->
-                <div class="d-flex align-items-center mb-4">
-                    <div class="input-group me-3" style="width: 150px;">
-                        <button class="btn btn-outline-secondary" type="button" id="decrease">-</button>
-                        <input type="number" class="form-control text-center" value="1" min="1" max="<?php echo $product['stock']; ?>" id="quantity">
-                        <button class="btn btn-outline-secondary" type="button" id="increase">+</button>
-                    </div>
-                    <button class="btn btn-primary me-2 add-to-cart" data-id="<?php echo $product['id']; ?>">
-                        <i class="fas fa-shopping-cart"></i> Thêm vào giỏ hàng
-                    </button>
-                    <button class="btn btn-outline-primary">
-                        <i class="fas fa-heart"></i> Yêu thích
-                    </button>
-                </div>
-
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Chính sách bán hàng</h5>
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Thông số kỹ thuật:</h5>
                         <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success me-2"></i> Miễn phí vận chuyển cho đơn hàng trên 1.000.000 VNĐ</li>
-                            <li><i class="fas fa-check text-success me-2"></i> Đổi trả trong 7 ngày</li>
-                            <li><i class="fas fa-check text-success me-2"></i> Bảo hành 12 tháng</li>
-                            <li><i class="fas fa-check text-success me-2"></i> Hỗ trợ 24/7</li>
+                            <li class="mb-2"><strong>Danh mục:</strong> <?php echo ucfirst($product['category_name']); ?></li>
+                            <li class="mb-2"><strong>Màu sắc:</strong> <?php echo $product['color']; ?></li>
+                            <li class="mb-2"><strong>Trọng lượng:</strong> <?php echo $product['weight']; ?></li>
+                            <li class="mb-2"><strong>Xuất xứ:</strong> <?php echo $product['origin']; ?></li>
+                            <li class="mb-2"><strong>Chất liệu:</strong> <?php echo $product['material']; ?></li>
+                            <li class="mb-2">
+                                <strong>Tình trạng:</strong> 
+                                <?php if ($product['stock'] > 0): ?>
+                                    <span class="badge bg-success">Còn hàng</span>
+                                <?php else: ?>
+                                    <span class="badge bg-danger">Hết hàng</span>
+                                <?php endif; ?>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Chọn size -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-3">Chọn size:</label>
+                        <div class="size-options d-flex flex-wrap gap-2">
+                            <?php foreach ($sizes as $size): ?>
+                                <div class="size-option">
+                                    <input type="radio" class="btn-check" name="size" id="size_<?php echo htmlspecialchars($size); ?>" value="<?php echo htmlspecialchars($size); ?>" required>
+                                    <label class="btn btn-outline-primary" for="size_<?php echo htmlspecialchars($size); ?>">
+                                        <?php echo htmlspecialchars($size); ?>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- Tăng/giảm số lượng -->
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="input-group me-3" style="width: 150px;">
+                            <button class="btn btn-outline-primary" type="button" id="decrease">-</button>
+                            <input type="number" class="form-control text-center" value="1" min="1" max="<?php echo $product['stock']; ?>" id="quantity">
+                            <button class="btn btn-outline-primary" type="button" id="increase">+</button>
+                        </div>
+                        <button class="btn btn-primary me-2 add-to-cart" data-id="<?php echo $product['id']; ?>">
+                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ hàng
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <div class="policy-card p-3">
+                        <h5 class="fw-bold mb-3">Chính sách bán hàng</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Miễn phí vận chuyển cho đơn hàng trên 1.000.000 VNĐ</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Đổi trả trong 7 ngày</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Bảo hành 12 tháng</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Hỗ trợ 24/7</li>
                         </ul>
                     </div>
                 </div>
@@ -173,15 +238,22 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- Sản phẩm liên quan -->
         <div class="row mt-5">
             <div class="col-12">
-                <h3 class="mb-4">Sản phẩm liên quan</h3>
-                <div class="row">
+                <h3 class="mb-4 fw-bold">Sản phẩm liên quan</h3>
+                <div class="row g-4">
                     <?php foreach ($related_products as $related): ?>
-                    <div class="col-md-3 mb-4">
-                        <div class="card product-card">
-                            <img src="<?php echo $related['image']; ?>" class="card-img-top" alt="<?php echo $related['name']; ?>">
+                    <div class="col-md-3">
+                        <div class="card h-100 border-0 shadow-sm product-card">
+                            <div class="position-relative">
+                                <div class="product-image-container" style="height: 250px; overflow: hidden;">
+                                    <img src="uploads/products/<?php echo $related['image']; ?>" 
+                                         class="card-img-top product-image" 
+                                         alt="<?php echo $related['name']; ?>"
+                                         style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title"><?php echo $related['name']; ?></h5>
-                                <p class="card-text text-primary fw-bold">
+                                <h5 class="card-title text-dark mb-2"><?php echo $related['name']; ?></h5>
+                                <p class="card-text text-danger fw-bold mb-3">
                                     <?php echo number_format($related['price'], 0, ',', '.'); ?> VNĐ
                                 </p>
                                 <div class="d-flex justify-content-between">
@@ -199,7 +271,7 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include 'footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -224,7 +296,7 @@ $related_products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             button.addEventListener('click', function () {
                 const productId = this.dataset.id;
                 const quantity = document.getElementById('quantity').value;
-                const size = document.getElementById('sizeSelect')?.value;
+                const size = document.querySelector('input[name="size"]:checked')?.value;
 
                 if (!size) {
                     alert("Vui lòng chọn size trước khi thêm vào giỏ hàng.");

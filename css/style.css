@@ -13,24 +13,6 @@ body {
   color: var(--dark-color);
 }
 
-/* Header Styles */
-.navbar {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.navbar-brand {
-  font-weight: bold;
-  color: white !important;
-}
-
-.nav-link {
-  color: white !important;
-  transition: color 0.3s;
-}
-
-.nav-link:hover {
-  color: var(--secondary-color) !important;
-}
 
 /* Hero Section */
 .hero-section {
