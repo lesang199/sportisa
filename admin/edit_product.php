@@ -27,6 +27,11 @@ try {
         exit();
     }
 
+    // Lấy thông tin chi tiết sản phẩm
+    $stmt = $conn->prepare("SELECT * FROM product_details WHERE product_id = ?");
+    $stmt->execute([$product_id]);
+    $product_detail = $stmt->fetch(PDO::FETCH_ASSOC);
+
     // Lấy danh sách danh mục
     $stmt = $conn->query("SELECT * FROM categories WHERE status = 'active' ORDER BY name");
     $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -34,6 +39,11 @@ try {
     // Lấy danh sách thương hiệu
     $stmt = $conn->query("SELECT * FROM brands WHERE status = 'active' ORDER BY name");
     $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Lấy danh sách size của sản phẩm
+    $stmt = $conn->prepare("SELECT * FROM product_sizes WHERE id = ? ORDER BY size");
+    $stmt->execute([$product_id]);
+    $product_sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch(PDOException $e) {
     $error = 'Có lỗi xảy ra: ' . $e->getMessage();
 }
@@ -50,6 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stock = intval($_POST['stock']);
     $status = $_POST['status'];
     $featured = isset($_POST['featured']) ? 1 : 0;
+    $color = trim($_POST['color']);
+    $material = trim($_POST['material']);
+    $origin = trim($_POST['origin']);
+    $weight = !empty($_POST['weight']) ? floatval($_POST['weight']) : null;
+
+    // Xử lý sizes
+    $sizes = isset($_POST['sizes']) ? $_POST['sizes'] : [];
+    $existing_sizes = [];
+    if ($product_sizes) {
+        foreach ($product_sizes as $size) {
+            $existing_sizes[] = $size['size'];
+        }
+    }
 
     try {
         // Xử lý upload hình ảnh mới nếu có
@@ -87,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         if (!isset($error)) {
+            // Cập nhật bảng products
             $stmt = $conn->prepare("
                 UPDATE products 
                 SET name = ?, slug = ?, description = ?, price = ?, sale_price = ?, 
@@ -97,12 +121,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $name, $slug, $description, $price, $sale_price, 
                 $category_id, $brand_id, $stock, $status, $featured, $image, $product_id
             ]);
+
+            // Cập nhật hoặc thêm mới thông tin chi tiết sản phẩm
+            if ($product_detail) {
+                $stmt = $conn->prepare("
+                    UPDATE product_details 
+                    SET color = ?, material = ?, origin = ?, weight = ?, category_id = ?
+                    WHERE product_id = ?
+                ");
+                $stmt->execute([$color, $material, $origin, $weight, $category_id, $product_id]);
+            } else {
+                $stmt = $conn->prepare("
+                    INSERT INTO product_details 
+                    (product_id, color, material, origin, weight, category_id)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([$product_id, $color, $material, $origin, $weight, $category_id]);
+            }
+
+            // Xử lý cập nhật sizes
+            // Xóa tất cả sizes cũ
+            $stmt = $conn->prepare("DELETE FROM product_sizes WHERE id = ?");
+            $stmt->execute([$product_id]);
+
+            // Thêm sizes mới
+            if (!empty($sizes)) {
+                $stmt = $conn->prepare("INSERT INTO product_sizes (id, size) VALUES (?, ?)");
+                foreach ($sizes as $size) {
+                    if (!empty(trim($size))) {
+                        $stmt->execute([$product_id, trim($size)]);
+                    }
+                }
+            }
+
             $success = 'Cập nhật sản phẩm thành công';
             
             // Cập nhật lại thông tin sản phẩm
             $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
             $stmt->execute([$product_id]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Cập nhật lại thông tin chi tiết
+            $stmt = $conn->prepare("SELECT * FROM product_details WHERE product_id = ?");
+            $stmt->execute([$product_id]);
+            $product_detail = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Cập nhật lại danh sách size
+            $stmt = $conn->prepare("SELECT * FROM product_sizes WHERE id = ? ORDER BY size");
+            $stmt->execute([$product_id]);
+            $product_sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     } catch(PDOException $e) {
         $error = 'Có lỗi xảy ra: ' . $e->getMessage();
@@ -124,53 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h4 class="text-white">SPORTISA</h4>
-                        <p class="text-muted">Quản lý</p>
-                    </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="index.php">
-                                <i class="fas fa-home me-2"></i> Tổng quan
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active text-white" href="products.php">
-                                <i class="fas fa-box me-2"></i> Sản phẩm
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="categories.php">
-                                <i class="fas fa-tags me-2"></i> Danh mục
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="orders.php">
-                                <i class="fas fa-shopping-cart me-2"></i> Đơn hàng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="users.php">
-                                <i class="fas fa-users me-2"></i> Người dùng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="admins.php">
-                                <i class="fas fa-user-shield me-2"></i> Quản trị viên
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="../logout.php">
-                                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Main content -->
+            <?php include '../admin/view/sidebar.php'; ?>    
+                     <!-- Main content -->
             <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Chỉnh sửa sản phẩm</h1>
@@ -264,6 +286,65 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Thông tin chi tiết sản phẩm -->
+                                    <h4 class="mt-4 mb-3">Thông tin chi tiết</h4>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Màu sắc</label>
+                                                <input type="text" class="form-control" name="color" 
+                                                       value="<?php echo htmlspecialchars($product_detail['color'] ?? ''); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Chất liệu</label>
+                                                <input type="text" class="form-control" name="material" 
+                                                       value="<?php echo htmlspecialchars($product_detail['material'] ?? ''); ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Xuất xứ</label>
+                                                <input type="text" class="form-control" name="origin" 
+                                                       value="<?php echo htmlspecialchars($product_detail['origin'] ?? ''); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Trọng lượng (kg)</label>
+                                                <input type="number" step="0.01" class="form-control" name="weight" 
+                                                       value="<?php echo $product_detail['weight'] ?? ''; ?>">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Size Management -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Kích thước</label>
+                                        <div id="sizes-container">
+                                            <?php 
+                                            if ($product_sizes) {
+                                                foreach ($product_sizes as $index => $size) {
+                                                    echo '<div class="input-group mb-2 size-input-group">
+                                                            <input type="text" class="form-control" name="sizes[]" 
+                                                                   value="' . htmlspecialchars($size['size']) . '" placeholder="Nhập kích thước">
+                                                            <button type="button" class="btn btn-danger remove-size">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                          </div>';
+                                                }
+                                            }
+                                            ?>
+                                        </div>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="add-size">
+                                            <i class="fas fa-plus me-2"></i>Thêm kích thước
+                                        </button>
+                                    </div>
+
                                     <div class="mb-3">
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" name="featured" id="featured" 
@@ -298,5 +379,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý thêm size mới
+            document.getElementById('add-size').addEventListener('click', function() {
+                const container = document.getElementById('sizes-container');
+                const newSizeInput = document.createElement('div');
+                newSizeInput.className = 'input-group mb-2 size-input-group';
+                newSizeInput.innerHTML = `
+                    <input type="text" class="form-control" name="sizes[]" placeholder="Nhập kích thước">
+                    <button type="button" class="btn btn-danger remove-size">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(newSizeInput);
+            });
+
+            // Xử lý xóa size
+            document.getElementById('sizes-container').addEventListener('click', function(e) {
+                if (e.target.closest('.remove-size')) {
+                    e.target.closest('.size-input-group').remove();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

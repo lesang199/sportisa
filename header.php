@@ -55,9 +55,7 @@ try {
                         <li class="nav-item">
                             <a class="nav-link" href="about.php">Giới thiệu</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="news.php">Tin tức</a>
-                        </li>
+                        
                         <li class="nav-item">
                             <a class="nav-link" href="contact.php">Liên hệ</a>
                         </li>

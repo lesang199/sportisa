@@ -14,12 +14,12 @@ class ProductsModel {
     }
 
     public function getProducts($filters = []) {
-        $query = "SELECT p.*, c.categories_name FROM products p 
+        $query = "SELECT p.*, c.name as category_name FROM products p 
                   LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
         $params = [];
 
         if (!empty($filters['category'])) {
-            $query .= " AND c.categories_name = ?";
+            $query .= " AND c.name = ?";
             $params[] = $filters['category'];
         }
 

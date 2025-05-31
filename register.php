@@ -120,6 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <label for="phone" class="form-label">Số điện thoại</label>
                                 <input type="text" class="form-control" id="phone" name="phone" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>">
                             </div>
+                            <div class="mb-2">
+                                <label for="phone" class="form-label">Địa chỉ</label>
+                                <input type="text" class="form-control" id="address" name="address" value="<?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?>">
+                            </div>
                             
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary">Đăng ký</button>

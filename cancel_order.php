@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../config/database.php';
+include 'config/database.php';
 
 class OrderCancellation {
     private $conn;
@@ -55,6 +55,8 @@ class OrderCancellation {
 
         } catch (Exception $e) {
             $this->conn->rollBack();
+            error_log("Lỗi hủy đơn hàng: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }

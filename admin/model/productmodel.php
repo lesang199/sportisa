@@ -55,10 +55,23 @@ class ProductService {
         $success = '';
         $error = '';
         try {
+            // Start transaction
+            $this->conn->beginTransaction();
+
+            // First delete related product details
+            $stmt = $this->conn->prepare("DELETE FROM product_details WHERE product_id = ?");
+            $stmt->execute([intval($id)]);
+
+            // Then delete the product
             $stmt = $this->conn->prepare("DELETE FROM products WHERE id = ?");
             $stmt->execute([intval($id)]);
+
+            // Commit transaction
+            $this->conn->commit();
             $success = 'Xóa sản phẩm thành công';
         } catch(PDOException $e) {
+            // Rollback transaction on error
+            $this->conn->rollBack();
             $error = 'Có lỗi xảy ra: ' . $e->getMessage();
         }
 

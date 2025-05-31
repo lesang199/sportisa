@@ -122,7 +122,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script>
     function cancelOrder(orderId) {
         if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-            fetch('api/cancel_order.php', {
+            fetch('cancel_order.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -131,18 +131,23 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     order_id: orderId
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     alert('Đã hủy đơn hàng thành công');
                     location.reload();
                 } else {
-                    alert('Có lỗi xảy ra: ' + data.message);
+                    alert('Có lỗi xảy ra: ' + (data.message || 'Không xác định được lỗi'));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi xử lý yêu cầu');
+                alert('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại sau.');
             });
         }
     }

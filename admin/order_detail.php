@@ -132,7 +132,7 @@ $orderController = new OrderController($conn);
                                                         <tr>
                                                             <td>
                                                                 <div class="d-flex align-items-center">
-                                                                    <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>" class="img-thumbnail me-2" style="width: 50px;">
+                                                                    <img src="../uploads/products/<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>" class="img-thumbnail me-2" style="width: 50px;">
                                                                     <div>
                                                                         <a href="../product.php?slug=<?php echo $item['slug']; ?>" class="text-decoration-none">
                                                                             <?php echo $item['name']; ?>

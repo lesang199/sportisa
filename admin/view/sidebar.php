@@ -45,6 +45,11 @@
             <i class="fas fa-shopping-cart me-2"></i><span> Đơn hàng</span>
         </a>
     </li>
+    <li class="nav-item <?php if(basename($_SERVER['PHP_SELF'])=='categories.php') echo 'active'; ?>">
+        <a class="nav-link text-white" href="categories.php">
+            <i class="fas fa-users me-2"></i> <span>Danh mục</span>
+        </a>
+    </li>
     <li class="nav-item <?php if(basename($_SERVER['PHP_SELF'])=='users.php') echo 'active'; ?>">
         <a class="nav-link text-white" href="users.php">
             <i class="fas fa-users me-2"></i> <span>Người dùng</span>

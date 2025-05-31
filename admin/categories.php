@@ -40,12 +40,11 @@ class CategoryManager {
         $name = trim($_POST['name']);
         $slug = strtolower(str_replace(' ', '-', $name));
         $description = trim($_POST['description']);
-        $parent_id = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
         $status = $_POST['status'];
 
         try {
-            $stmt = $this->conn->prepare("INSERT INTO categories (name, slug, description, parent_id, status) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$name, $slug, $description, $parent_id, $status]);
+            $stmt = $this->conn->prepare("INSERT INTO categories (name, slug, description, status) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$name, $slug, $description, $status]);
             $this->success = 'Thêm danh mục thành công';
         } catch(PDOException $e) {
             $this->error = 'Có lỗi xảy ra: ' . $e->getMessage();
@@ -57,17 +56,12 @@ class CategoryManager {
         $name = trim($_POST['name']);
         $slug = strtolower(str_replace(' ', '-', $name));
         $description = trim($_POST['description']);
-        $parent_id = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
         $status = $_POST['status'];
 
         try {
-            if ($parent_id == $id) {
-                $this->error = 'Không thể chọn chính mình làm danh mục cha';
-            } else {
-                $stmt = $this->conn->prepare("UPDATE categories SET name = ?, slug = ?, description = ?, parent_id = ?, status = ? WHERE id = ?");
-                $stmt->execute([$name, $slug, $description, $parent_id, $status, $id]);
-                $this->success = 'Cập nhật danh mục thành công';
-            }
+            $stmt = $this->conn->prepare("UPDATE categories SET name = ?, slug = ?, description = ?, status = ? WHERE id = ?");
+            $stmt->execute([$name, $slug, $description, $status, $id]);
+            $this->success = 'Cập nhật danh mục thành công';
         } catch(PDOException $e) {
             $this->error = 'Có lỗi xảy ra: ' . $e->getMessage();
         }
@@ -77,17 +71,11 @@ class CategoryManager {
         $id = intval($_GET['delete']);
 
         try {
-            $stmt = $this->conn->prepare("SELECT COUNT(*) FROM categories WHERE parent_id = ?");
-            $stmt->execute([$id]);
-            $has_children = $stmt->fetchColumn() > 0;
-
             $stmt = $this->conn->prepare("SELECT COUNT(*) FROM products WHERE category_id = ?");
             $stmt->execute([$id]);
             $has_products = $stmt->fetchColumn() > 0;
 
-            if ($has_children) {
-                $this->error = 'Không thể xóa danh mục này vì có danh mục con';
-            } elseif ($has_products) {
+            if ($has_products) {
                 $this->error = 'Không thể xóa danh mục này vì có sản phẩm liên quan';
             } else {
                 $stmt = $this->conn->prepare("DELETE FROM categories WHERE id = ?");
@@ -102,10 +90,8 @@ class CategoryManager {
     private function loadCategories() {
         try {
             $stmt = $this->conn->query("
-                SELECT c.*, p.name as parent_name 
-                FROM categories c 
-                LEFT JOIN categories p ON c.parent_id = p.id 
-                ORDER BY c.parent_id IS NULL DESC, c.name
+                SELECT * FROM categories 
+                ORDER BY name
             ");
             $this->categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
@@ -153,7 +139,6 @@ class CategoryManager {
                                     <tr>
                                         <th>ID</th>
                                         <th>Tên danh mục</th>
-                                        <th>Danh mục cha</th>
                                         <th>Mô tả</th>
                                         <th>Trạng thái</th>
                                         <th>Ngày tạo</th>
@@ -165,7 +150,6 @@ class CategoryManager {
                                         <tr>
                                             <td><?php echo $category['id']; ?></td>
                                             <td><?php echo htmlspecialchars($category['name']); ?></td>
-                                            <td><?php echo $category['parent_name'] ? htmlspecialchars($category['parent_name']) : '<span class="text-muted">Không có</span>'; ?></td>
                                             <td><?php echo htmlspecialchars($category['description']); ?></td>
                                             <td>
                                                 <span class="badge bg-<?php echo $category['status'] === 'active' ? 'success' : 'danger'; ?>">
@@ -206,20 +190,6 @@ class CategoryManager {
                                                             <div class="mb-3">
                                                                 <label class="form-label">Mô tả</label>
                                                                 <textarea class="form-control" name="description" rows="3"><?php echo htmlspecialchars($category['description']); ?></textarea>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Danh mục cha</label>
-                                                                <select class="form-select" name="parent_id">
-                                                                    <option value="">Không có</option>
-                                                                    <?php foreach ($this->categories as $parent): ?>
-                                                                        <?php if ($parent['id'] != $category['id']): ?>
-                                                                            <option value="<?php echo $parent['id']; ?>" 
-                                                                                    <?php echo $parent['id'] == $category['parent_id'] ? 'selected' : ''; ?>>
-                                                                                <?php echo htmlspecialchars($parent['name']); ?>
-                                                                            </option>
-                                                                        <?php endif; ?>
-                                                                    <?php endforeach; ?>
-                                                                </select>
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label class="form-label">Trạng thái</label>
@@ -264,17 +234,6 @@ class CategoryManager {
                                     <textarea class="form-control" name="description" rows="3"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Danh mục cha</label>
-                                    <select class="form-select" name="parent_id">
-                                        <option value="">Không có</option>
-                                        <?php foreach ($this->categories as $category): ?>
-                                            <option value="<?php echo $category['id']; ?>">
-                                                <?php echo htmlspecialchars($category['name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
                                     <label class="form-label">Trạng thái</label>
                                     <select class="form-select" name="status">
                                         <option value="active">Hoạt động</option>
@@ -300,10 +259,8 @@ class CategoryManager {
 
 // Usage
 try {
-    $database = new Database();
-    $db = $database->getConnection();
-    
-    $categoryManager = new CategoryManager($db);
+    // Sử dụng biến $conn đã được tạo từ database.php
+    $categoryManager = new CategoryManager($conn);
     $categoryManager->render();
 } catch(Exception $e) {
     echo "Error: " . $e->getMessage();

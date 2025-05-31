@@ -56,9 +56,9 @@ $products = $productsController->getProducts($_GET);
                             </li>
                             <?php foreach ($categories as $cat): ?>
                                 <li>
-                                    <a href="#" class="category-link <?php echo $category == $cat['categories_name'] ? 'active' : ''; ?>" 
-                                       data-category="<?php echo $cat['categories_name']; ?>">
-                                        <i class="fas fa-angle-right me-2"></i><?php echo $cat['name']; ?>
+                                    <a href="#" class="category-link <?php echo $category == $cat['name'] ? 'active' : ''; ?>" 
+                                       data-category="<?php echo htmlspecialchars($cat['name']); ?>">
+                                        <i class="fas fa-angle-right me-2"></i><?php echo htmlspecialchars($cat['name']); ?>
                                     </a>
                                 </li>
                             <?php endforeach; ?>
